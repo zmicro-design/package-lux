@@ -1,0 +1,72 @@
+#!/bin/bash
+
+VERSION=v0.15.0
+
+set -e
+
+help() {
+  echo "Usage:"
+  echo "  zmicro package install lux <args...>"
+  echo ""
+}
+
+install() {
+  local arch="$(os::arch)"
+  local os="Linux"
+  local bin_path=/usr/bin
+
+  if [ "$(os::is_macos)" = "true" ]; then
+    os="macOS"
+    bin_path=/usr/local/bin
+  fi
+
+  if [ "$arch" = "amd64" ]; then
+    arch="64-bit"
+  elif [ "$arch" = "arm64" ]; then
+    arch="ARM64"
+  else
+    log::error "unknown architecture: $arch"
+    exit 1
+  fi
+
+  local name="lux"
+
+  local tmp_file=/tmp/$name.tar.gz
+  # reference: https://github.com/iawia002/lux/releases
+  # example:
+  #   https://github.com/iawia002/lux/releases/download/v0.15.0/lux_0.15.0_macOS_64-bit.tar.gz
+  #   https://github.com/iawia002/lux/releases/download/v0.15.0/lux_0.15.0_macOS_ARM64.tar.gz
+  local url="https://github.com/iawia002/lux/releases/download/$VERSION/${name}_${VERSION#v}_${os}_${arch}.tar.gz"
+  log::debug "[package][$name] url: $url"
+
+  os::curl -fSL $url -o $tmp_file
+
+  cd /tmp
+  tar -zxvf $tmp_file >>/dev/null 2>&1
+
+  sudo mv lux $bin_path/$name
+
+  rm -rf $tmp_file
+}
+
+core() {
+  if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    help
+    exit 0
+  fi
+
+  install
+  if [ $? -eq 0 ]; then
+    log::success "install lux success."
+    exit 0
+  else
+    log::error "install lux failed."
+    exit 1
+  fi
+}
+
+run() {
+  core $@
+}
+
+run $@

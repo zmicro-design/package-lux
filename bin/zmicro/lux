@@ -1,0 +1,17 @@
+#!/bin/bash
+
+help() {
+  echo "Usage:"
+  echo "  zmicro lux <args ...>"
+  echo ""
+}
+
+core() {
+  lux "$@"
+}
+
+run() {
+  core "$@"
+}
+
+run "$@"
